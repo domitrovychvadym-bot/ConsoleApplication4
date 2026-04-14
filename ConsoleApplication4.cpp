@@ -1,247 +1,270 @@
 #include <iostream>
-#include <fstream>
+#include <vector>
 #include <string>
-#include <iomanip>
 #include <cstdlib>
 #include <ctime>
-#include <cmath>
-
 using namespace std;
 
-/* ===================== VECTOR3D ===================== */
+/* ===================== 1.7 VECTOR3D ===================== */
 
 class Vector3D {
 private:
     double x, y, z;
     int State;
-    static int objectCount;
+    static int count;
 
 public:
-    Vector3D() : x(0), y(0), z(0), State(0) { objectCount++; }
-    Vector3D(double xx, double yy, double zz) : x(xx), y(yy), z(zz), State(0) { objectCount++; }
+    // constructors
+    Vector3D() : x(0), y(0), z(0), State(0) { count++; }
 
-    ~Vector3D() {
-        cout << "[Destructor Vector3D] State = " << State << endl;
-        objectCount--;
-    }
+    Vector3D(double v) : x(v), y(v), z(v), State(0) { count++; }
 
-    static int getObjectCount() { return objectCount; }
-
-    Vector3D operator+(const Vector3D& b) const {
-        return Vector3D(x + b.x, y + b.y, z + b.z);
-    }
-
-    Vector3D operator-(const Vector3D& b) const {
-        return Vector3D(x - b.x, y - b.y, z - b.z);
-    }
-
-    Vector3D operator*(double k) const {
-        return Vector3D(x * k, y * k, z * k);
-    }
-
-    Vector3D operator/(double k) const {
-        if (k == 0) return *this;
-        return Vector3D(x / k, y / k, z / k);
-    }
-
-    bool operator==(const Vector3D& b) const {
-        return x == b.x && y == b.y && z == b.z;
-    }
-
-    double& operator[](int i) {
-        if (i == 0) return x;
-        if (i == 1) return y;
-        return z;
-    }
-
-    friend ostream& operator<<(ostream& os, const Vector3D& v) {
-        os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
-        return os;
-    }
-
-    friend istream& operator>>(istream& is, Vector3D& v) {
-        is >> v.x >> v.y >> v.z;
-        return is;
-    }
-};
-
-int Vector3D::objectCount = 0;
-
-/* ===================== ASSOCIATIVE CLASS ===================== */
-
-class StudentRecord {
-private:
-    string surname, name, patronymic;
-
-public:
-    StudentRecord(string s = "", string n = "", string p = "")
-        : surname(s), name(n), patronymic(p) {
-    }
-
-    string getFullName() const {
-        return surname + " " + name + " " + patronymic;
-    }
-
-    bool operator==(const StudentRecord& other) const {
-        return getFullName() == other.getFullName();
-    }
-
-    friend ostream& operator<<(ostream& os, const StudentRecord& st) {
-        os << st.getFullName();
-        return os;
-    }
-};
-
-class AssocGroupList {
-private:
-    int numbers[10];
-    StudentRecord students[10];
-    int count;
-
-public:
-    AssocGroupList() : count(0) {}
-
-    void add(int number, const StudentRecord& st) {
-        numbers[count] = number;
-        students[count] = st;
+    Vector3D(double* arr) {
+        if (!arr) {
+            State = -1;
+            x = y = z = 0;
+        }
+        else {
+            x = arr[0]; y = arr[1]; z = arr[2];
+            State = 0;
+        }
         count++;
     }
 
-    void createSample() {
-        add(1, { "Ivanenko","Petro","Oleksandrovych" });
-        add(2, { "Petrenko","Iryna","Vasylivna" });
-        add(3, { "Sydorenko","Oleh","Mykolaiovych" });
-        add(4, { "Kovalenko","Maria","Ivanivna" });
-        add(5, { "Bondar","Andrii","Serhiiovych" });
+    Vector3D(double x, double y, double z) : x(x), y(y), z(z), State(0) { count++; }
+
+    ~Vector3D() {
+        cout << "Destructor called, state = " << State << endl;
+        count--;
     }
 
-    void printAll() const {
-        cout << "\nGroup list:\n";
-        for (int i = 0; i < count; i++) {
-            cout << numbers[i] << " -> " << students[i] << endl;
-        }
+    static int getCount() { return count; }
+
+    // ++ --
+    Vector3D& operator++() { x++; y++; z++; return *this; }
+    Vector3D operator++(int) { Vector3D t = *this; ++(*this); return t; }
+
+    Vector3D& operator--() { x--; y--; z--; return *this; }
+    Vector3D operator--(int) { Vector3D t = *this; --(*this); return t; }
+
+    // !
+    bool operator!() const { return !(x != 0 && y != 0 && z != 0); }
+
+    // ~ (simple perpendicular)
+    Vector3D operator~() { return Vector3D(-y, x, z); }
+
+    // unary -
+    Vector3D operator-() { return Vector3D(-x, -y, -z); }
+
+    // =
+    Vector3D& operator=(const Vector3D& v) {
+        x = v.x; y = v.y; z = v.z; State = v.State;
+        return *this;
     }
 
-    StudentRecord operator[](int number) {
-        for (int i = 0; i < count; i++) {
-            if (numbers[i] == number)
-                return students[i];
-        }
-        return StudentRecord();
+    // += -= *= /=
+    Vector3D& operator+=(const Vector3D& v) { x += v.x; y += v.y; z += v.z; return *this; }
+    Vector3D& operator-=(const Vector3D& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+
+    Vector3D& operator*=(double k) { x *= k; y *= k; z *= k; return *this; }
+
+    Vector3D& operator/=(double k) {
+        if (k == 0) { State = -2; return *this; }
+        x /= k; y /= k; z /= k;
+        return *this;
     }
 
-    int operator()(const StudentRecord& st) {
-        for (int i = 0; i < count; i++) {
-            if (students[i] == st)
-                return numbers[i];
-        }
-        return -1;
+    // binary
+    Vector3D operator+(const Vector3D& v) { return Vector3D(x + v.x, y + v.y, z + v.z); }
+    Vector3D operator-(const Vector3D& v) { return Vector3D(x - v.x, y - v.y, z - v.z); }
+    Vector3D operator*(double k) { return Vector3D(x * k, y * k, z * k); }
+    Vector3D operator/(double k) { return k == 0 ? *this : Vector3D(x / k, y / k, z / k); }
+
+    // ==
+    bool operator==(const Vector3D& v) {
+        return x == v.x && y == v.y && z == v.z;
+    }
+
+    bool operator!=(const Vector3D& v) {
+        return !(*this == v);
+    }
+
+    // []
+    double& operator[](int i) {
+        if (i == 0) return x;
+        if (i == 1) return y;
+        if (i == 2) return z;
+        State = -3;
+        return z;
+    }
+
+    // ()
+    void operator()() {
+        cout << "(" << x << "," << y << "," << z << ")" << endl;
+    }
+
+    // compare
+    double len() const { return x * x + y * y + z * z; }
+
+    bool operator>(const Vector3D& v) { return len() > v.len(); }
+    bool operator>=(const Vector3D& v) { return len() >= v.len(); }
+    bool operator<(const Vector3D& v) { return len() < v.len(); }
+    bool operator<=(const Vector3D& v) { return len() <= v.len(); }
+
+    // I/O
+    friend istream& operator>>(istream& in, Vector3D& v) {
+        in >> v.x >> v.y >> v.z;
+        return in;
+    }
+
+    friend ostream& operator<<(ostream& out, const Vector3D& v) {
+        out << "(" << v.x << "," << v.y << "," << v.z << ")";
+        return out;
     }
 };
 
-/* ===================== MATRIX ===================== */
+int Vector3D::count = 0;
+
+/* ===================== 2.7 ASSOCIATIVE ===================== */
+
+class Assoc {
+private:
+    vector<int> num;
+    vector<string> name;
+    int CodeError;
+
+public:
+    Assoc() : CodeError(0) {}
+
+    void add(int n, string s) {
+        num.push_back(n);
+        name.push_back(s);
+    }
+
+    string operator[](int n) {
+        for (int i = 0; i < num.size(); i++)
+            if (num[i] == n) return name[i];
+        CodeError = 1;
+        return "Not found";
+    }
+
+    int operator()(string s) {
+        for (int i = 0; i < name.size(); i++)
+            if (name[i] == s) return num[i];
+        CodeError = 1;
+        return -1;
+    }
+
+    friend ostream& operator<<(ostream& out, Assoc& a) {
+        for (int i = 0; i < a.num.size(); i++)
+            out << a.num[i] << " -> " << a.name[i] << endl;
+        [14.04.2026 16:06] Vadim🦴: return out;
+    }
+};
+
+/* ===================== 3.7 MATRIX ===================== */
 
 class MatrixLong {
 private:
-    long a[3][3];
+    vector<vector<long>> m;
+    int n;
+    int codeError;
+    static int count;
 
 public:
-    MatrixLong(long val = 0) {
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                a[i][j] = val;
+    MatrixLong() : n(0), codeError(0) { count++; }
+
+    MatrixLong(int size) {
+        n = size;
+        m.resize(n, vector<long>(n, 0));
+        for (int i = 0; i < n; i++) m[i][i] = 1;
+        count++;
     }
 
-    MatrixLong operator+(const MatrixLong& b) const {
-        MatrixLong r;
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                r.a[i][j] = a[i][j] + b.a[i][j];
+    MatrixLong(int n, int val) {
+        this->n = n;
+        m.resize(n, vector<long>(n, val));
+        count++;
+    }
+
+    ~MatrixLong() { count--; }
+
+    // +
+    MatrixLong operator+(MatrixLong& b) {
+        MatrixLong r(n, 0);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                r.m[i][j] = m[i][j] + b.m[i][j];
         return r;
     }
 
-    MatrixLong operator*(long k) const {
-        MatrixLong r;
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                r.a[i][j] = a[i][j] * k;
+    // *
+    MatrixLong operator*(long k) {
+        MatrixLong r(n, 0);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                r.m[i][j] = m[i][j] * k;
         return r;
     }
 
-    void input() {
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                cin >> a[i][j];
+    void randomFill() {
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                m[i][j] = rand() % 10;
     }
 
-    void print() const {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++)
-                cout << a[i][j] << " ";
+    void print() {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++)
+                cout << m[i][j] << " ";
             cout << endl;
         }
     }
 };
 
-/* ===================== TESTS ===================== */
+int MatrixLong::count = 0;
 
-void testTask17() {
-    cout << "\n========== TASK 1.7 ==========\n";
+/* ===================== TEST ===================== */
+
+void test1() {
     Vector3D a(1, 2, 3), b(3, 2, 1);
-    cout << "a = " << a << endl;
-    cout << "b = " << b << endl;
-    cout << "a + b = " << a + b << endl;
+    Vector3D r = (a + b) * 2 - a + b * 3;
+    cout << "Result: " << r << endl;
 }
 
-void testTask27() {
-    cout << "\n========== TASK 2.7 ==========\n";
-    AssocGroupList grp;
-    grp.createSample();
-    grp.printAll();
-
-    cout << "\nSearch number 3: " << grp[3] << endl;
+void test2() {
+    Assoc a;
+    a.add(1, "Ivan");
+    a.add(2, "Petro");
+    cout << a;
+    cout << "Search 2: " << a[2] << endl;
 }
 
-void testTask37() {
-    cout << "\n========== TASK 3.7 ==========\n";
-    MatrixLong A, B;
-
-    cout << "Enter matrix A:\n";
-    A.input();
-
-    cout << "Enter matrix B:\n";
-    B.input();
-
+void test3() {
+    MatrixLong A(3), B(3);
+    A.randomFill();
+    B.randomFill();
+    cout << "A:\n"; A.print();
+    cout << "B:\n"; B.print();
     MatrixLong C = A + B;
-
-    cout << "\nA + B:\n";
-    C.print();
+    cout << "A+B:\n"; C.print();
 }
 
 /* ===================== MAIN ===================== */
 
 int main() {
+    srand(time(0));
 
-    system("chcp 1251");
-
-    int choice;
-
+    int c;
     do {
-        cout << "\n========== LAB 4 MENU ==========\n";
-        cout << "1 - Task 1.7\n";
-        cout << "2 - Task 2.7\n";
-        cout << "3 - Task 3.7\n";
-        cout << "0 - Exit\n";
-        cout << "Choose: ";
-        cin >> choice;
+        cout << "\n1-Task1\n2-Task2\n3-Task3\n0-Exit\n";
+        cin >> c;
 
-        switch (choice) {
-        case 1: testTask17(); break;
-        case 2: testTask27(); break;
-        case 3: testTask37(); break;
-        }
+        if (c == 1) test1();
+        if (c == 2) test2();
+        if (c == 3) test3();
 
-    } while (choice != 0);
+    } while (c != 0);
 
     return 0;
 }
